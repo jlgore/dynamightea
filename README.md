@@ -71,7 +71,7 @@ For applications running in Amazon ECS, DynamighTea will automatically use the E
 
 ### Prerequisites
 
-- Go 1.19 or higher
+- Go 1.21 or higher
 - AWS account with DynamoDB access (or DynamoDB Local for development)
 
 ### Build from source
@@ -83,6 +83,30 @@ go mod tidy
 # Build
 go build -o dynamightea
 ```
+
+### Continuous Integration
+
+This project uses GitHub Actions for continuous integration and delivery:
+
+- Automatically builds on Linux, macOS, and Windows
+- Cross-compiles for ARM64, ARM, and other architectures
+- Runs unit tests on all platforms
+- Creates release artifacts (zip for Windows, tar.gz for others)
+- Automatically creates GitHub Releases when version tags are pushed
+
+To create a new release:
+
+1. Tag the commit with a version:
+   ```bash
+   git tag v1.0.0
+   ```
+
+2. Push the tag to GitHub:
+   ```bash
+   git push origin v1.0.0
+   ```
+
+3. GitHub Actions will automatically build all binaries and create a release
 
 ## License
 

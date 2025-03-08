@@ -19,10 +19,10 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
         cache: true
@@ -104,7 +104,7 @@ jobs:
       shell: bash
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dynamightea-${{ matrix.os }}
         path: |
@@ -113,7 +113,7 @@ jobs:
           
     - name: Upload cross-compiled artifacts (Linux only)
       if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dynamightea-cross-compiled
         path: |
@@ -130,17 +130,22 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+        
+    - name: List downloaded artifacts
+      run: find artifacts -type f | sort
       
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: |
-          **/dynamightea-*.zip
-          **/dynamightea-*.tar.gz
+          artifacts/**/dynamightea-*.zip
+          artifacts/**/dynamightea-*.tar.gz
         draft: false
         prerelease: false
       env:
