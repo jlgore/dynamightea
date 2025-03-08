@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jg/dynamightea/cmd/dynamightea"
+	"github.com/jlgore/dynamightea/cmd/dynamightea"
 )
 
 func main() {

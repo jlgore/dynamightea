@@ -14,7 +14,7 @@ A terminal-based UI (TUI) frontend for Amazon DynamoDB, built with Go and [Bubbl
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/dynamightea.git
+git clone https://github.com/jlgore/dynamightea.git
 cd dynamightea
 
 # Build the binary

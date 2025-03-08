@@ -1,4 +1,4 @@
-module github.com/jg/dynamightea
+module github.com/jlgore/dynamightea
 
 go 1.23.3
 

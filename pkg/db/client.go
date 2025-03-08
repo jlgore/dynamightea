@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
-	appconfig "github.com/jg/dynamightea/pkg/config"
+	appconfig "github.com/jlgore/dynamightea/pkg/config"
 )
 
 // KeySchemaElement represents a key schema element in DynamoDB
