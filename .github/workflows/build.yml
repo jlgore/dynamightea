@@ -1,0 +1,147 @@
+name: Build DynamighTea
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]  # Run workflow on version tags
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        go-version: ['1.21']
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ matrix.go-version }}
+        cache: true
+
+    - name: Install dependencies
+      run: go mod download
+
+    - name: Build binary
+      run: |
+        # Build with platform-specific settings
+        if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          go build -v -o dynamightea.exe
+        else
+          go build -v -o dynamightea
+        fi
+      shell: bash
+      
+    - name: Cross compile (Linux only)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        # Build for various architectures on Linux
+        GOOS=linux GOARCH=arm64 go build -o dynamightea-linux-arm64
+        GOOS=linux GOARCH=arm go build -o dynamightea-linux-arm
+        GOOS=darwin GOARCH=arm64 go build -o dynamightea-darwin-arm64
+        GOOS=windows GOARCH=amd64 go build -o dynamightea-windows-amd64.exe
+      shell: bash
+
+    - name: Run tests
+      run: go test -v ./...
+
+    - name: Package binary
+      run: |
+        # Create a directory for the binary and supporting files
+        mkdir -p dist
+        # Copy README to dist folder
+        cp README.md dist/
+        
+        if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          # Package Windows binaries
+          cp dynamightea.exe dist/
+          ARTIFACT_NAME="dynamightea-windows-amd64"
+          (cd dist && zip -r "../${ARTIFACT_NAME}.zip" .)
+        elif [ "${{ matrix.os }}" = "macos-latest" ]; then
+          # Package macOS binaries
+          cp dynamightea dist/
+          ARTIFACT_NAME="dynamightea-macos-amd64"
+          (cd dist && tar -czf "../${ARTIFACT_NAME}.tar.gz" .)
+        else
+          # Package Linux binaries (native)
+          cp dynamightea dist/
+          ARTIFACT_NAME="dynamightea-linux-amd64"
+          (cd dist && tar -czf "../${ARTIFACT_NAME}.tar.gz" .)
+          
+          # Package cross-compiled binaries
+          # ARM64
+          mkdir -p dist-arm64
+          cp dynamightea-linux-arm64 dist-arm64/dynamightea
+          cp README.md dist-arm64/
+          (cd dist-arm64 && tar -czf "../dynamightea-linux-arm64.tar.gz" .)
+          
+          # ARM
+          mkdir -p dist-arm
+          cp dynamightea-linux-arm dist-arm/dynamightea
+          cp README.md dist-arm/
+          (cd dist-arm && tar -czf "../dynamightea-linux-arm.tar.gz" .)
+          
+          # Darwin ARM64
+          mkdir -p dist-darwin-arm64
+          cp dynamightea-darwin-arm64 dist-darwin-arm64/dynamightea
+          cp README.md dist-darwin-arm64/
+          (cd dist-darwin-arm64 && tar -czf "../dynamightea-darwin-arm64.tar.gz" .)
+          
+          # Windows (cross-compiled)
+          mkdir -p dist-windows
+          cp dynamightea-windows-amd64.exe dist-windows/dynamightea.exe
+          cp README.md dist-windows/
+          (cd dist-windows && zip -r "../dynamightea-windows-amd64-cross.zip" .)
+        fi
+      shell: bash
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dynamightea-${{ matrix.os }}
+        path: |
+          *.zip
+          *.tar.gz
+          
+    - name: Upload cross-compiled artifacts (Linux only)
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v3
+      with:
+        name: dynamightea-cross-compiled
+        path: |
+          dynamightea-linux-arm64.tar.gz
+          dynamightea-linux-arm.tar.gz
+          dynamightea-darwin-arm64.tar.gz
+          dynamightea-windows-amd64-cross.zip
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          **/dynamightea-*.zip
+          **/dynamightea-*.tar.gz
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
