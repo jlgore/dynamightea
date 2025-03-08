@@ -3,7 +3,7 @@ package ui
 import (
 	"github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jlgore/dynamightea/pkg/db"
+	"github.com/jlgore/dynamighTea/pkg/db"
 )
 
 type viewMode string
